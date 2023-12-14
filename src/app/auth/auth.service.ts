@@ -1,51 +1,75 @@
 import { User } from "./use.model";
-import { Router } from "@angular/router";
 import { AuthData } from "./auth-data.model";
-import { Subject } from "rxjs"; 
+import { Router } from "@angular/router";
+import { Subject } from "rxjs";
 import { Injectable } from "@angular/core";
+import { getAuth, createUserWithEmailAndPassword, Auth, signInWithEmailAndPassword, onAuthStateChanged } from "@angular/fire/auth";
+import { FirebaseApp } from "@angular/fire/app";
+import { TrainingService } from "../training/training.service";
 
 @Injectable()
 export class AuthService {
     authChange = new Subject<boolean>();
-    private user! : User | null;
+    private isAuthenticated: boolean = false
 
-    constructor(private router: Router) {}
+    constructor(
+        private router: Router,
+        private pAuth: FirebaseApp,
+        private fAuth: Auth,
+        private trainService: TrainingService
+    ) { }
+
+    initAuthListner() {
+        onAuthStateChanged(this.fAuth, (data) => {
+            console.log(data);
+        }, (error) => {
+            console.log(error);
+        });
+    }
 
     registerUser(authData: AuthData) {
-        this.user = {
-            email: authData.email,
-            userId: Math.round(Math.random() * 10000).toString()
-        };
-        this.authChange.next(true);
-        this.router.navigate(['/training']);
+        const auth = getAuth(this.pAuth);
+        createUserWithEmailAndPassword(
+            auth,
+            authData.email,
+            authData.password
+        ).then((userCredential) => {
+            console.log(userCredential);
+            this.authSuccessfully()
+        }).catch((error) => {
+            console.log(error);
+        });
     }
 
     login(authData: AuthData) {
-        this.user = {
-            email: authData.email,
-            userId: Math.round(Math.random() * 10000).toString()
-        };
-        this.authSuccessfully();
+        const auth = getAuth();
+        signInWithEmailAndPassword(
+            auth,
+            authData.email,
+            authData.password
+        ).then((userCredential) => {
+            this.authSuccessfully();
+        }).catch((error) => {
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            console.log("login error", error);
+        });
     }
 
     logout() {
-        this.user = null;
+        this.trainService.cancelSubscription();
         this.authChange.next(false);
         this.router.navigate(['/login']);
-    }
-
-    getUser() {
-        return {
-            ...this.user
-        };
+        this.isAuthenticated = false;
     }
 
     isAuth() {
-        return this.user != null;
+        return this.isAuthenticated;
     }
 
     private authSuccessfully() {
+        this.isAuthenticated = true;
         this.authChange.next(true);
         this.router.navigate(['/training']);
-    }  
+    }
 }

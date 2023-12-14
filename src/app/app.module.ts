@@ -20,7 +20,9 @@ import { AuthService } from './auth/auth.service';
 import { TrainingService } from './training/training.service';
 import { provideFirebaseApp, getApp, initializeApp } from '@angular/fire/app';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+import { AuthModule, provideAuth } from '@angular/fire/auth';
 import { environment } from '../environments/environment';
+import { getAuth } from 'firebase/auth';
 
 @NgModule({
     declarations: [
@@ -34,7 +36,7 @@ import { environment } from '../environments/environment';
         WelcomeComponent,
         HeaderComponent,
         SidenavListComponent,
-        StopTrainingComponent
+        StopTrainingComponent,
     ],
     imports: [
         BrowserModule,
@@ -44,8 +46,10 @@ import { environment } from '../environments/environment';
         FlexLayoutModule,
         FormsModule,
         ReactiveFormsModule,
+        AuthModule,
         provideFirebaseApp(() => initializeApp(environment.firebase)),
         provideFirestore(() => getFirestore()),
+        provideAuth(() => getAuth())
     ],
     providers: [
         AuthService,
